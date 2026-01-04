@@ -9,7 +9,7 @@ import ExportDialog from "./ExportDialog"
 
 const MainWindow = () => {
     const { user, openLogin, openRegister, logout } = useAuth()
-    const { currentFile, updateFileName, saveCurrentFile } = useFile()
+    const { currentFile, updateFileName, saveCurrentFile, isDirty } = useFile()
     const { commands } = useDraw()
     const [showExport, setShowExport] = useState(false)
 
@@ -20,8 +20,8 @@ const MainWindow = () => {
     }
 
     const handleSave = () => {
-        if (currentFile) {
-            saveCurrentFile(currentFile.content)
+        if (currentFile && isDirty) {
+            saveCurrentFile(commands)
         }
     }
 
@@ -51,7 +51,13 @@ const MainWindow = () => {
                         </div>
                     ) : (
                         <div className="flex justify-center items-center gap-4">
-                            <button onClick={handleSave} className="bg-white text-amber-500 hover:bg-amber-200 hover:text-gray-800 px-4 py-2 rounded-md font-semibold">Save</button>
+                            <button 
+                                onClick={handleSave}
+                                disabled={!isDirty}
+                                className={`bg-white px-4 py-2 rounded-md font-semibold transition-colors ${isDirty ? 'text-amber-500 hover:bg-amber-200 hover:text-gray-800' : 'text-gray-400 cursor-not-allowed opacity-70'}`}
+                            >
+                                Save
+                            </button>
                             <button className="bg-white text-amber-500 hover:bg-amber-200 hover:text-gray-800 px-4 py-2 rounded-md font-semibold">Share</button>
                             <button 
                                 onClick={() => commands?.trim().length > 0 && setShowExport(true)}
