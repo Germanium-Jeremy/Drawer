@@ -3,17 +3,20 @@ import { FaX } from "react-icons/fa6"
 import { useAuth } from "../contexts/AuthContext"
 import { toast } from "sonner"
 import api from "../lib/axios"
+import { useFile } from "../contexts/FileContext"
 
 const SignupDialog = () => {
     const [username, setUsername] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const { register, closeRegister, openLogin } = useAuth()
+    const { createFile } = useFile()
 
     const handleRegister = async () => {
         try {
             const response = await api.post('/auth/register', { email, password, username: username || undefined })
             const data = response.data
+            console.log('Registration successful:', data)
             
             // Auto-login after successful registration
             try {
@@ -25,6 +28,9 @@ const SignupDialog = () => {
                     email: loginData.email,
                     username: loginData.username ?? username ?? loginData.email.split('@')[0],
                 })
+
+                // Bootstrap new user with an initial file
+                await createFile('Untitled', '')
             } catch (loginError: any) {
                 toast.success('Registration successful, please log in.')
                 closeRegister()
