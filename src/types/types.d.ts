@@ -5,10 +5,11 @@ export interface User {
 }
 
 export interface File {
-    fileId: number
+    fileId: string
     fileName: string
     content: string
     createdAt: Date
+    updatedAt?: Date
 }
 
 export interface DrawState {
