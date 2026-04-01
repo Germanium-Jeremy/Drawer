@@ -8,6 +8,7 @@ export interface File {
     fileId: string
     fileName: string
     content: string
+    isShared?: boolean
     createdAt: Date
     updatedAt?: Date
 }
