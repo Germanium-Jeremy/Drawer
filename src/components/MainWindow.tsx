@@ -9,7 +9,7 @@ import ExportDialog from "./ExportDialog"
 
 const MainWindow = () => {
     const { user, openLogin, openRegister, logout } = useAuth()
-    const { currentFile, updateFileName, saveCurrentFile, isDirty } = useFile()
+    const { currentFile, updateFileName, saveCurrentFile, isDirty, readOnly, shareCurrentFile, forkSharedFile } = useFile()
     const { commands } = useDraw()
     const [showExport, setShowExport] = useState(false)
 
@@ -31,9 +31,10 @@ const MainWindow = () => {
                     <input
                         type="text"
                         placeholder="Enter file name..."
-                        className="bg-amber-500 text-white text-lg font-bold focus:outline-none w-auto"
-                        value={currentFile?.fileName}
+                        className={`bg-amber-500 text-white text-lg font-bold focus:outline-none w-auto ${readOnly ? 'opacity-80' : ''}`}
+                        value={currentFile?.fileName || ''}
                         onChange={(e) => updateFileName(e.target.value)}
+                        disabled={readOnly}
                     />
 
                     {!user ? (
@@ -51,14 +52,31 @@ const MainWindow = () => {
                         </div>
                     ) : (
                         <div className="flex justify-center items-center gap-4">
-                            <button 
-                                onClick={handleSave}
-                                disabled={!isDirty}
-                                className={`bg-white px-4 py-2 rounded-md font-semibold transition-colors ${isDirty ? 'text-amber-500 hover:bg-amber-200 hover:text-gray-800' : 'text-gray-400 cursor-not-allowed opacity-70'}`}
-                            >
-                                Save
-                            </button>
-                            <button className="bg-white text-amber-500 hover:bg-amber-200 hover:text-gray-800 px-4 py-2 rounded-md font-semibold">Share</button>
+                            {readOnly ? (
+                                <button 
+                                    onClick={forkSharedFile}
+                                    className="bg-white text-amber-500 hover:bg-amber-200 hover:text-gray-800 px-4 py-2 rounded-md font-semibold transition-colors"
+                                >
+                                    Fork
+                                </button>
+                            ) : (
+                                <>
+                                    <button 
+                                        onClick={handleSave}
+                                        disabled={!isDirty}
+                                        className={`bg-white px-4 py-2 rounded-md font-semibold transition-colors ${isDirty ? 'text-amber-500 hover:bg-amber-200 hover:text-gray-800' : 'text-gray-400 cursor-not-allowed opacity-70'}`}
+                                    >
+                                        Save
+                                    </button>
+                                    <button 
+                                        onClick={shareCurrentFile}
+                                        disabled={!currentFile || currentFile.isShared}
+                                        className={`bg-white px-4 py-2 rounded-md font-semibold transition-colors ${(!currentFile || currentFile.isShared) ? 'text-gray-400 cursor-not-allowed opacity-70' : 'text-amber-500 hover:bg-amber-200 hover:text-gray-800'}`}
+                                    >
+                                        {currentFile?.isShared ? 'Shared' : 'Share'}
+                                    </button>
+                                </>
+                            )}
                             <button 
                                 onClick={() => commands?.trim().length > 0 && setShowExport(true)}
                                 disabled={!commands || commands.trim().length === 0}
