@@ -6,8 +6,14 @@ import { useDraw } from "../contexts/DrawContext"
 
 function SideMenu() {
     const { user, openLogin } = useAuth()
-    const { openFileSelect } = useFile()
+    const { openFileSelect, notifyContentChange } = useFile()
     const { commands, handleSetCommands, handleGenerateDiagram } = useDraw()
+
+    // Keep FileContext dirty-state in sync whenever the editor content changes
+    const handleContentChange = (value: string) => {
+        handleSetCommands(value)
+        notifyContentChange(value)
+    }
 
     const handleFileClick = () => {
         if (!user) {
@@ -28,7 +34,7 @@ function SideMenu() {
                 <h1 className="text-lg font-bold">Paste or write your codes here.</h1>
                 <div className="bg-white p-4 rounded-md shadow-md h-full border-2 border-gray-300 focus-within:border-amber-500 flex flex-col">
                     <textarea className="w-full flex-grow focus:outline-none resize-none" placeholder="Write your code here..."
-                        value={commands} onChange={(e) => handleSetCommands(e.target.value)}
+                        value={commands} onChange={(e) => handleContentChange(e.target.value)}
                     ></textarea>
                     <button className="mt-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold py-1 px-3 rounded"
                         onClick={() => handleGenerateDiagram()}
