@@ -1,3 +1,8 @@
+interface Point {
+    x: number;
+    y: number;
+}
+
 export class DrawCanvas {
     private canvas: HTMLCanvasElement;
     private ctx: CanvasRenderingContext2D;
@@ -11,6 +16,8 @@ export class DrawCanvas {
         }
 
         this.ctx = context;
+        this.ctx.shadowBlur = 15;
+        // this.ctx.shadowColor = color;
 
         this.clear();
     }
@@ -55,5 +62,75 @@ export class DrawCanvas {
       this.ctx.lineWidth = width;
       this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       this.ctx.stroke();
+    }
+
+    drawArc(
+        x: number,
+        y: number,
+        radius: number,
+        start: number,
+        end: number,
+        color: string,
+        width: number
+    ) {
+        this.ctx.beginPath();
+
+        this.ctx.arc(
+            x,
+            y,
+            radius,
+            start * Math.PI / 180,
+            end * Math.PI / 180
+        );
+
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = width;
+
+        this.ctx.stroke();
+    }
+
+    drawEllipse(
+        x: number,
+        y: number,
+        rx: number,
+        ry: number,
+        color: string,
+        width: number
+    ) {
+        this.ctx.beginPath();
+
+        this.ctx.ellipse(
+            x,
+            y,
+            rx,
+            ry,
+            0,
+            0,
+            Math.PI * 2
+        );
+
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = width;
+
+        this.ctx.stroke();
+    }
+
+    drawPolygon(points: Point[]) {
+        this.ctx.beginPath();
+
+        this.ctx.moveTo(
+            points[0].x,
+            points[0].y
+        );
+
+        for (let i = 1; i < points.length; i++) {
+            this.ctx.lineTo(
+                points[i].x,
+                points[i].y
+            );
+        }
+
+        this.ctx.closePath();
+        this.ctx.fill();
     }
 }
