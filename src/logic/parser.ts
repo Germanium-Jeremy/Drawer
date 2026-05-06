@@ -1,3 +1,8 @@
+interface Point {
+    x: number;
+    y: number;
+}
+
 export type Command =
     | { type: 'FORWARD'; value: number }
     | { type: 'BACKWARD'; value: number }
@@ -8,8 +13,13 @@ export type Command =
     | { type: 'COLOR'; value: string }
     | { type: 'WIDTH'; value: number }
     | { type: 'REPEAT'; count: number; commands: Command[] }
+    | { type: 'CLEAR' }
     | { type: 'CIRCLE'; radius: number }
-    | { type: 'CLEAR' };    
+    | { type: 'SETXY'; x: number; y: number }
+    | { type: 'HOME' }
+    | { type: 'ARC'; radius: number; startAngle: number; endAngle: number }
+    | { type: 'ELLIPSE'; rx: number; ry: number }
+    | { type: 'POLYGON'; points: Point[] }
 
 type Token =
     | { type: 'WORD'; value: string }
@@ -81,41 +91,69 @@ export function parse(input: string): Command[] {
     const tokens = tokenize(input);
     let index = 0;
 
+    // Helper to read a numeric token and advance the cursor.
+    function expectNumber(cmdName: string): number {
+        const token = tokens[index];
+        if (!token || token.type !== 'NUMBER') {
+            throw new Error(`Command "${cmdName}" expects a numeric parameter`);
+        }
+        index++;
+        return token.value;
+    }
+
+    // Helper to read a word token and advance the cursor.
+    function expectWord(cmdName: string): string {
+        const token = tokens[index];
+        if (!token || token.type !== 'WORD') {
+            throw new Error(`Command "${cmdName}" expects a text parameter`);
+        }
+        index++;
+        return token.value;
+    }
+
+    // Ensures a command is properly terminated (semicolon, bracket, next command, or EOF).
+    function expectTerminator(cmdName: string) {
+        if (index >= tokens.length) return; // end of input
+        const next = tokens[index];
+        if (next.type === 'SEMICOLON') {
+            index++; // consume semicolon
+            return;
+        }
+        if (next.type === 'RBRACKET' || next.type === 'WORD') {
+            // Accept closing bracket or start of next command as terminator.
+            return;
+        }
+        throw new Error(`Expected ";", end of command (']' or another command) or end of input after "${cmdName}" command, but got "${next.type}"`);
+    }
+
     function parseCommands(inRepeat = false): Command[] {
         const commands: Command[] = [];
         while (index < tokens.length) {
             const token = tokens[index];
             if (token.type === 'RBRACKET') {
                 if (!inRepeat) {
-                    // stray closing bracket at top level
                     throw new Error(`Unexpected closing bracket "]" at token index ${index}`);
                 }
-                break; // end of repeat body
+                break;
             }
             const cmd = parseCommand();
-            if (cmd) {
-                commands.push(cmd);
-            }
+            if (cmd) commands.push(cmd);
         }
         return commands;
     }
 
     function parseCommand(): Command | null {
         if (index >= tokens.length) return null;
-
         const token = tokens[index];
         if (token.type === 'SEMICOLON') {
             index++;
             return null;
         }
-
         if (token.type !== 'WORD') {
             throw new Error(`Expected command word, but got token type "${token.type}" at index ${index}`);
         }
-
         const cmdWord = token.value.toLowerCase();
         index++;
-
         switch (cmdWord) {
             case 'forward':
             case 'fd': {
@@ -183,7 +221,7 @@ export function parse(input: string): Command[] {
                 if (!valToken || valToken.type !== 'NUMBER') {
                     throw new Error(`Command "${cmdWord}" expects a number parameter`);
                 }
-                if (valToken.value < 0) throw new Error(`Width can't be less that 0`)
+                if (valToken.value < 0) throw new Error(`Width can't be less that 0`);
                 index++;
                 expectTerminator(cmdWord);
                 return { type: 'WIDTH', value: valToken.value };
@@ -200,63 +238,80 @@ export function parse(input: string): Command[] {
                     throw new Error(`Command "repeat" expects a repeat count parameter`);
                 }
                 index++;
-
                 const bracketToken = tokens[index];
                 if (!bracketToken || bracketToken.type !== 'LBRACKET') {
                     throw new Error(`Command "repeat" expects a opening bracket "[" for loop body`);
                 }
                 index++;
-
                 const loopCommands = parseCommands(true);
-
                 const endBracketToken = tokens[index];
                 if (!endBracketToken || endBracketToken.type !== 'RBRACKET') {
                     throw new Error(`Expected closing bracket "]" for repeat block`);
                 }
                 index++;
                 expectTerminator('repeat');
-
                 return { type: 'REPEAT', count: countToken.value, commands: loopCommands };
             }
             case 'circle':
             case 'c': {
                 const valToken = tokens[index];
                 if (!valToken || valToken.type !== 'NUMBER') {
-                throw new Error(`Command "${cmdWord}" expects a numeric radius`);
+                    throw new Error(`Command "${cmdWord}" expects a numeric radius`);
                 }
                 index++;
                 expectTerminator(cmdWord);
                 return { type: 'CIRCLE', radius: valToken.value };
+            }
+            case 'setxy': {
+                const x = expectNumber(cmdWord);
+                const y = expectNumber(cmdWord);
+                expectTerminator(cmdWord);
+                return { type: 'SETXY', x, y };
+            }
+            case 'home': {
+                expectTerminator(cmdWord);
+                return { type: 'HOME' };
+            }
+            case 'arc': {
+                const radius = expectNumber(cmdWord);
+                const startAngle = expectNumber(cmdWord);
+                const endAngle = expectNumber(cmdWord);
+                expectTerminator(cmdWord);
+                return { type: 'ARC', radius, startAngle, endAngle };
+            }
+            case 'ellipse': {
+                const rx = expectNumber(cmdWord);
+                const ry = expectNumber(cmdWord);
+                expectTerminator(cmdWord);
+                return { type: 'ELLIPSE', rx, ry };
+            }
+            case 'polygon': {
+                const start = tokens[index];
+                if (!start || start.type !== 'LBRACKET') {
+                    throw new Error('polygon expects "["');
+                }
+                index++;
+                const points: Point[] = [];
+                while (index < tokens.length && tokens[index].type !== 'RBRACKET') {
+                    const x = expectNumber('polygon');
+                    const y = expectNumber('polygon');
+                    points.push({ x, y });
+                }
+                if (index >= tokens.length || tokens[index].type !== 'RBRACKET') {
+                    throw new Error('polygon missing closing "]"');
+                }
+                index++; // consume closing bracket
+                expectTerminator(cmdWord);
+                return { type: 'POLYGON', points };
             }
             default:
                 throw new Error(`Unknown command: "${cmdWord}"`);
         }
     }
 
-    function expectTerminator(cmdName: string) {
-        // Terminator can be a semicolon, a closing bracket, another command (WORD), or end‑of‑input.
-        if (index >= tokens.length) {
-            // End of input is fine – no explicit terminator needed.
-            return;
-        }
-        const next = tokens[index];
-        if (next.type === 'SEMICOLON') {
-            index++; // consume the semicolon and move on
-            return;
-        }
-        if (next.type === 'RBRACKET' || next.type === 'WORD') {
-            // A closing bracket or the start of the next command also ends the current one.
-            return;
-        }
-        // Anything else is unexpected – give a helpful error.
-        throw new Error(`Expected ";", end of command (']' or another command) or end of input after "${cmdName}" command, but got "${next.type}"`);
-    }
-
     const parsed = parseCommands();
     if (index < tokens.length) {
         throw new Error(`Unexpected token at end of commands: "${tokens[index].type}"`);
     }
-
-    // Filter out null elements (which happen when we parse plain SEMICOLONs)
-    return parsed.filter(cmd => cmd !== null) as Command[];
+    return parsed.filter((cmd): cmd is Command => cmd !== null);
 }
