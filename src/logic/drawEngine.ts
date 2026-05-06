@@ -82,15 +82,48 @@ export class DrawEngine {
             case "CIRCLE":
                 // Draw a circle centered at the current turtle location.
                 if (this.state.penDown) {
-                this.canvas.drawCircle(
-                    this.state.x,
-                    this.state.y,
-                    command.radius,
-                    this.state.color,
-                    this.state.width
-                );
-            }
-            break;
+                    this.canvas.drawCircle(
+                        this.state.x,
+                        this.state.y,
+                        command.radius,
+                        this.state.color,
+                        this.state.width
+                    );
+                }
+                break;
+            case "ARC":
+                // Draw an arc centred at the current turtle location.
+                if (this.state.penDown) {
+                    this.canvas.drawArc(
+                        this.state.x,
+                        this.state.y,
+                        command.radius,
+                        command.startAngle,
+                        command.endAngle,
+                        this.state.color,
+                        this.state.width
+                    );
+                }
+                break;
+            case "ELLIPSE":
+                // Draw an ellipse centred at the current turtle location.
+                if (this.state.penDown) {
+                    this.canvas.drawEllipse(
+                        this.state.x,
+                        this.state.y,
+                        command.rx,
+                        command.ry,
+                        this.state.color,
+                        this.state.width
+                    );
+                }
+                break;
+            case "POLYGON":
+                // Draw a polygon using the provided points.
+                if (this.state.penDown) {
+                    this.canvas.drawPolygon(command.points);
+                }
+                break;
         }
     }
 
