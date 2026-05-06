@@ -19,7 +19,7 @@ export type Command =
     | { type: 'HOME' }
     | { type: 'ARC'; radius: number; startAngle: number; endAngle: number }
     | { type: 'ELLIPSE'; rx: number; ry: number }
-    | { type: 'POLYGON'; points: Point[] }
+    | { type: 'POLYGON'; points: Point[]; color?: string; width?: number; rotation?: number }
 
 type Token =
     | { type: 'WORD'; value: string }

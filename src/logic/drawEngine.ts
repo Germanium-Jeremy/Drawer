@@ -119,10 +119,27 @@ export class DrawEngine {
                 }
                 break;
             case "POLYGON":
-                // Draw a polygon using the provided points.
+                // Draw a polygon using the provided points and optional styling.
                 if (this.state.penDown) {
-                    this.canvas.drawPolygon(command.points);
+                    const polyColor = (command as any).color !== undefined ? (command as any).color : this.state.color;
+                    const polyWidth = (command as any).width !== undefined ? (command as any).width : this.state.width;
+                    const polyRotation = (command as any).rotation;
+                    this.canvas.drawPolygon(
+                        command.points,
+                        polyColor,
+                        polyWidth,
+                        polyRotation
+                    );
                 }
+                break;
+            case "SETXY":
+                this.state.x = command.x;
+                this.state.y = command.y;
+                break;
+            case "HOME":
+                this.state.x = 400;
+                this.state.y = 300;
+                this.state.angle = 0;
                 break;
         }
     }

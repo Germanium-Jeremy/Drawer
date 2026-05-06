@@ -115,22 +115,56 @@ export class DrawCanvas {
         this.ctx.stroke();
     }
 
-    drawPolygon(points: Point[]) {
-        this.ctx.beginPath();
-
-        this.ctx.moveTo(
-            points[0].x,
-            points[0].y
-        );
-
-        for (let i = 1; i < points.length; i++) {
-            this.ctx.lineTo(
-                points[i].x,
-                points[i].y
+        /**
+     * Draw a polygon defined by an array of points.
+     * @param points   The vertices of the polygon.
+     * @param color    Fill (and stroke) color to use. If omitted, the current fillStyle is kept.
+     * @param width    Stroke width. If omitted, the current lineWidth is kept.
+     * @param rotation Rotation angle in degrees to apply around the polygon's centroid.
+     *                 If omitted or 0, the polygon is drawn as‑is.
+     */
+    drawPolygon(
+        points: Point[],
+        color?: string,
+        width?: number,
+        rotation?: number
+    ) {
+        if (points.length < 2) return;
+        // Save the current context state so we can restore after drawing.
+        this.ctx.save();
+        // Apply optional styling.
+        if (color !== undefined) this.ctx.fillStyle = color;
+        if (width !== undefined) this.ctx.lineWidth = width;
+        if (color !== undefined) this.ctx.strokeStyle = color;
+        // Compute rotation if requested.
+        let transformed = points;
+        if (rotation && rotation !== 0) {
+            const rad = (rotation * Math.PI) / 180;
+            // Compute centroid.
+            const centroid = points.reduce(
+                (c, p) => ({ x: c.x + p.x / points.length, y: c.y + p.y / points.length }),
+                { x: 0, y: 0 }
             );
+            transformed = points.map(p => {
+                const dx = p.x - centroid.x;
+                const dy = p.y - centroid.y;
+                const rx = dx * Math.cos(rad) - dy * Math.sin(rad) + centroid.x;
+                const ry = dx * Math.sin(rad) + dy * Math.cos(rad) + centroid.y;
+                return { x: rx, y: ry };
+            });
         }
 
+        this.ctx.beginPath();
+        this.ctx.moveTo(transformed[0].x, transformed[0].y);
+        for (let i = 1; i < transformed.length; i++) {
+            this.ctx.lineTo(transformed[i].x, transformed[i].y);
+        }
         this.ctx.closePath();
+        // Fill then stroke to give both visual effects.
         this.ctx.fill();
+        this.ctx.stroke();
+
+        // Restore original context (styles, transforms, etc.).
+        this.ctx.restore();
     }
 }
