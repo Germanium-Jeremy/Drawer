@@ -44,11 +44,14 @@ export class DrawEngine {
                 break;
 
             case "LEFT":
-                this.state.angle -= command.value;
+                this.state.angle = (this.state.angle - command.value) % 360;
+                // Normalise to 0‑360 range
+                if (this.state.angle < 0) this.state.angle += 360;
                 break;
 
             case "RIGHT":
-                this.state.angle += command.value;
+                this.state.angle = (this.state.angle + command.value) % 360;
+                if (this.state.angle < 0) this.state.angle += 360;
                 break;
 
             case "PENUP":
