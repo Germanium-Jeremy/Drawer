@@ -21,14 +21,14 @@ const DrawArea = () => {
     }, [error]);
 
     return (
-        <main className="flex-1 p-6 flex items-center justify-center bg-gray-100 relative overflow-hidden min-h-[400px]">
+        <main className="flex-1 p-6 flex items-center justify-center bg-gray-100 relative overflow-hidden min-h-100">
             <div className="relative bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                 <canvas
                     ref={canvasRef}
                     id="diagram-canvas"
                     width={800}
                     height={600}
-                    className="block max-w-full max-h-[70vh] bg-white aspect-[4/3]"
+                    className="block max-w-full max-h-[70vh] bg-white aspect-4/3"
                 />
 
                 {diagramLoading && (
