@@ -79,6 +79,18 @@ export class DrawEngine {
                     this.run(command.commands);
                 }
                 break;
+            case "CIRCLE":
+                // Draw a circle centered at the current turtle location.
+                if (this.state.penDown) {
+                this.canvas.drawCircle(
+                    this.state.x,
+                    this.state.y,
+                    command.radius,
+                    this.state.color,
+                    this.state.width
+                );
+            }
+            break;
         }
     }
 
