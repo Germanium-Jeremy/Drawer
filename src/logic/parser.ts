@@ -8,7 +8,8 @@ export type Command =
     | { type: 'COLOR'; value: string }
     | { type: 'WIDTH'; value: number }
     | { type: 'REPEAT'; count: number; commands: Command[] }
-    | { type: 'CLEAR' };
+    | { type: 'CIRCLE'; radius: number }
+    | { type: 'CLEAR' };    
 
 type Token =
     | { type: 'WORD'; value: string }
@@ -216,6 +217,16 @@ export function parse(input: string): Command[] {
                 expectTerminator('repeat');
 
                 return { type: 'REPEAT', count: countToken.value, commands: loopCommands };
+            }
+            case 'circle':
+            case 'c': {
+                const valToken = tokens[index];
+                if (!valToken || valToken.type !== 'NUMBER') {
+                throw new Error(`Command "${cmdWord}" expects a numeric radius`);
+                }
+                index++;
+                expectTerminator(cmdWord);
+                return { type: 'CIRCLE', radius: valToken.value };
             }
             default:
                 throw new Error(`Unknown command: "${cmdWord}"`);
