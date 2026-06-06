@@ -24,19 +24,22 @@ export function DrawProvider({ children }: { children: React.ReactNode }) {
         const canvas = document.getElementById('diagram-canvas') as HTMLCanvasElement;
         if (!canvas) return;
 
-        setDiagramLoading(true)
-        setError(null)
+        setDiagramLoading(true);
+        setError(null);
 
         try {
-            const parsed = commands.trim() === '' ? [] : parse(commands);
+            // Ensure a fresh canvas for every execution
             const drawCanvas = new DrawCanvas(canvas);
+            drawCanvas.clear();
+
+            const parsed = commands.trim() === '' ? [] : parse(commands);
             const engine = new DrawEngine(drawCanvas);
             engine.run(parsed);
         } catch (err: any) {
             console.error(err);
             setError(err.message || "An error occurred during parsing or execution.");
         } finally {
-            setDiagramLoading(false)
+            setDiagramLoading(false);
         }
     }
 
