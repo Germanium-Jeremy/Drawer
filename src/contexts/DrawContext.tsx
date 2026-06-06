@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useRef } from "react";
-import { toast } from "sonner";
+import React, { createContext, useContext, useState } from "react";
 import { parse } from "../logic/parser";
 import { DrawCanvas } from "../logic/canvas";
 import { DrawEngine } from "../logic/drawEngine";
@@ -18,7 +17,6 @@ export function DrawProvider({ children }: { children: React.ReactNode }) {
     const [commands, setCommands] = useState('')
     const [diagramLoading, setDiagramLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
-    const timeoutRef = useRef<number | null>(null)
 
     const handleGenerateDiagram = () => {
         const canvas = document.getElementById('diagram-canvas') as HTMLCanvasElement;
@@ -44,22 +42,9 @@ export function DrawProvider({ children }: { children: React.ReactNode }) {
     }
 
     const handleSetCommands = (newCommands: string) => {
-        setCommands(newCommands)
+        // Update the command text instantly and clear any pending auto‑run.
+        setCommands(newCommands);
         setError(null)
-
-        if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current)
-        }
-
-        timeoutRef.current = window.setTimeout(() => {
-            const canvas = document.getElementById('diagram-canvas') as HTMLCanvasElement;
-            if (canvas) {
-                handleGenerateDiagram()
-                if (newCommands.trim() !== '') {
-                    toast.success("Diagram updated successfully!")
-                }
-            }
-        }, 3000)
     }
 
     return (
