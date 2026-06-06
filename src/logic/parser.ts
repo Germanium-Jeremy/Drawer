@@ -80,12 +80,16 @@ export function parse(input: string): Command[] {
     const tokens = tokenize(input);
     let index = 0;
 
-    function parseCommands(): Command[] {
+    function parseCommands(inRepeat = false): Command[] {
         const commands: Command[] = [];
         while (index < tokens.length) {
             const token = tokens[index];
             if (token.type === 'RBRACKET') {
-                break;
+                if (!inRepeat) {
+                    // stray closing bracket at top level
+                    throw new Error(`Unexpected closing bracket "]" at token index ${index}`);
+                }
+                break; // end of repeat body
             }
             const cmd = parseCommand();
             if (cmd) {
@@ -119,7 +123,7 @@ export function parse(input: string): Command[] {
                     throw new Error(`Command "${cmdWord}" expects a number parameter`);
                 }
                 index++;
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'FORWARD', value: valToken.value };
             }
             case 'backward':
@@ -129,7 +133,7 @@ export function parse(input: string): Command[] {
                     throw new Error(`Command "${cmdWord}" expects a number parameter`);
                 }
                 index++;
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'BACKWARD', value: valToken.value };
             }
             case 'left':
@@ -139,7 +143,7 @@ export function parse(input: string): Command[] {
                     throw new Error(`Command "${cmdWord}" expects a number parameter`);
                 }
                 index++;
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'LEFT', value: valToken.value };
             }
             case 'right':
@@ -149,17 +153,17 @@ export function parse(input: string): Command[] {
                     throw new Error(`Command "${cmdWord}" expects a number parameter`);
                 }
                 index++;
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'RIGHT', value: valToken.value };
             }
             case 'penup':
             case 'pu': {
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'PENUP' };
             }
             case 'pendown':
             case 'pd': {
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'PENDOWN' };
             }
             case 'color':
@@ -169,7 +173,7 @@ export function parse(input: string): Command[] {
                     throw new Error(`Command "${cmdWord}" expects a color name or hex code`);
                 }
                 index++;
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'COLOR', value: valToken.value };
             }
             case 'width':
@@ -180,12 +184,12 @@ export function parse(input: string): Command[] {
                 }
                 if (valToken.value < 0) throw new Error(`Width can't be less that 0`)
                 index++;
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'WIDTH', value: valToken.value };
             }
             case 'clear':
             case 'cs': {
-                expectSemicolon(cmdWord);
+                expectTerminator(cmdWord);
                 return { type: 'CLEAR' };
             }
             case 'repeat':
@@ -202,14 +206,14 @@ export function parse(input: string): Command[] {
                 }
                 index++;
 
-                const loopCommands = parseCommands();
+                const loopCommands = parseCommands(true);
 
                 const endBracketToken = tokens[index];
                 if (!endBracketToken || endBracketToken.type !== 'RBRACKET') {
                     throw new Error(`Expected closing bracket "]" for repeat block`);
                 }
                 index++;
-                expectSemicolon('repeat');
+                expectTerminator('repeat');
 
                 return { type: 'REPEAT', count: countToken.value, commands: loopCommands };
             }
@@ -218,14 +222,23 @@ export function parse(input: string): Command[] {
         }
     }
 
-    function expectSemicolon(cmdName: string) {
+    function expectTerminator(cmdName: string) {
+        // Terminator can be a semicolon, a closing bracket, another command (WORD), or end‑of‑input.
         if (index >= tokens.length) {
-            throw new Error(`Expected semicolon ";" at the end of "${cmdName}" command`);
+            // End of input is fine – no explicit terminator needed.
+            return;
         }
-        if (tokens[index].type !== 'SEMICOLON') {
-            throw new Error(`Expected semicolon ";" after "${cmdName}" command parameters, got "${tokens[index].type === 'WORD' ? tokens[index] : tokens[index].type}"`);
+        const next = tokens[index];
+        if (next.type === 'SEMICOLON') {
+            index++; // consume the semicolon and move on
+            return;
         }
-        index++;
+        if (next.type === 'RBRACKET' || next.type === 'WORD') {
+            // A closing bracket or the start of the next command also ends the current one.
+            return;
+        }
+        // Anything else is unexpected – give a helpful error.
+        throw new Error(`Expected ";", end of command (']' or another command) or end of input after "${cmdName}" command, but got "${next.type}"`);
     }
 
     const parsed = parseCommands();
