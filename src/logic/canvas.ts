@@ -41,4 +41,19 @@ export class DrawCanvas {
 
         this.ctx.stroke();
     }
+
+    // *** NEW: draw a full circle ***
+    drawCircle(
+      cx: number,
+      cy: number,
+      radius: number,
+      color: string,
+      width: number
+    ) {
+      this.ctx.beginPath();
+      this.ctx.strokeStyle = color;
+      this.ctx.lineWidth = width;
+      this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      this.ctx.stroke();
+    }
 }
