@@ -2,10 +2,12 @@ import { FaFile } from "react-icons/fa"
 import { useAuth } from "../contexts/AuthContext"
 import { useFile } from "../contexts/FileContext"
 import { TrancateText } from '../lib/common'
+import { useDraw } from "../contexts/DrawContext"
 
 function SideMenu() {
     const { user, openLogin } = useAuth()
     const { openFileSelect } = useFile()
+    const { commands, handleSetCommands } = useDraw()
 
     const handleFileClick = () => {
         if (!user) {
@@ -25,7 +27,9 @@ function SideMenu() {
             <div className="flex flex-col gap-4 h-full mb-10">
                 <h1 className="text-lg font-bold">Paste or write your codes here.</h1>
                 <div className="bg-white p-4 rounded-md shadow-md h-full border-2 border-gray-300 focus-within:border-amber-500">
-                    <textarea className="w-full h-full focus:outline-none resize-none" placeholder="Write your code here..."></textarea>
+                    <textarea className="w-full h-full focus:outline-none resize-none" placeholder="Write your code here..."
+                        value={commands} onChange={(e) => handleSetCommands(e.target.value)}
+                    ></textarea>
                 </div>
             </div>
 
