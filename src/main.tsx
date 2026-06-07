@@ -4,12 +4,17 @@ import './index.css'
 import App from './App'
 import { AuthProvider } from './contexts/AuthContext'
 import { FileProvider } from './contexts/FileContext'
+import { Toaster } from 'sonner'
+import { DrawProvider } from './contexts/DrawContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
       <FileProvider>
-        <App />
+        <DrawProvider>
+          <App />
+          <Toaster />
+        </DrawProvider>
       </FileProvider>
     </AuthProvider>
   </StrictMode>,
