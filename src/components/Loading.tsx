@@ -1,4 +1,4 @@
-export default function LoadingComponent(isFull ?: boolean) {
+export default function LoadingComponent(isFull?: boolean) {
     if (!isFull) return <span className="w-10 h-10 rounded-full border-x-2 border-amber-500 animate-spin"></span>
 
     return (
