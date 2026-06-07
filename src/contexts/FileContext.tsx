@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import type { File } from "../types/types";
 import { useAuth } from "./AuthContext";
+import { toast } from "sonner";
 
 interface FileContextType {
     files: File[];
@@ -40,7 +41,7 @@ function persistFiles(userId: number, files: File[]) {
 export function FileProvider({ children }: { children: React.ReactNode }) {
     const { user } = useAuth()
     const [files, setFiles] = useState<File[]>([])
-    const [currentFile, setCurrentFile] = useState<File | null>(null)
+    const [currentFile, setCurrentFile] = useState<File | null>({ fileName: 'Untitled', content: '', fileId: 0, createdAt: new Date() })
     const [showFileSelect, setShowFileSelect] = useState(false)
 
     // Load files when user changes (login/logout)
@@ -64,6 +65,7 @@ export function FileProvider({ children }: { children: React.ReactNode }) {
         setFiles(updated)
         setCurrentFile(newFile)
         if (user) persistFiles(user.userId, updated)
+        toast.success(`File "${fileName}" created!`)
         return newFile
     }
 
@@ -74,6 +76,7 @@ export function FileProvider({ children }: { children: React.ReactNode }) {
             setCurrentFile(null)
         }
         if (user) persistFiles(user.userId, updated)
+        toast.success(`File deleted!`)
     }
 
     function openFile(fileId: number) {
@@ -89,6 +92,7 @@ export function FileProvider({ children }: { children: React.ReactNode }) {
         setFiles(updated)
         setCurrentFile(updatedFile)
         if (user) persistFiles(user.userId, updated)
+        toast.success(`File saved!`)
     }
 
     function updateFileName(fileName: string) {
@@ -98,6 +102,7 @@ export function FileProvider({ children }: { children: React.ReactNode }) {
         setFiles(updated)
         setCurrentFile(updatedFile)
         if (user) persistFiles(user.userId, updated)
+        toast.success(`File name updated!`)
     }
 
     function openFileSelect() {
