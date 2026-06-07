@@ -2,6 +2,7 @@ import { AiOutlineMinus } from "react-icons/ai"
 import { FaPlus } from "react-icons/fa"
 import { useAuth } from "../contexts/AuthContext"
 import { useFile } from "../contexts/FileContext"
+import DrawArea from "./DrawArea"
 
 const MainWindow = () => {
     const { user, openLogin, openRegister, logout } = useAuth()
@@ -26,7 +27,7 @@ const MainWindow = () => {
                         type="text"
                         placeholder="Enter file name..."
                         className="bg-amber-500 text-white text-lg font-bold focus:outline-none w-auto"
-                        value={currentFile?.fileName || "Untitled"}
+                        value={currentFile?.fileName}
                         onChange={(e) => updateFileName(e.target.value)}
                     />
 
@@ -53,9 +54,7 @@ const MainWindow = () => {
                     )}
                 </header>
 
-                <main className="p-4 h-full">
-                    <p>This is the main content area.</p>
-                </main>
+                <DrawArea />
 
                 <footer className='flex justify-between items-center px-8 py-2'>
                     <button 
