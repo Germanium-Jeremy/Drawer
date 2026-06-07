@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import LoadingComponent from "../components/Loading";
 import type { User } from "../types/types";
+import { toast } from "sonner";
 
 interface AuthContextType {
     user: User | null;
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(token)
         setUser(user)
         setShowLogin(false)
+        toast.success(`Welcome back, ${user.username}!`)
     }
 
     function register(token: string, user: User) {
@@ -52,6 +54,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(token)
         setUser(user)
         setShowRegister(false)
+        toast.success(`Account created! Welcome, ${user.username}!`)
     }
 
     function logout() {
