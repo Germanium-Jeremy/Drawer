@@ -1,0 +1,3 @@
+This is a project I was developing for drawing images from commands. I have recently mocked authentication and authorization. I have also done the functionality of file saving but didn't finish.
+I wanted you to refactor the codes to make the authentication and authorization process smooth and not redundant. The same for the file handling process. I have authContext and fileContext which
+should help there in the process by providing the needed functions. 
