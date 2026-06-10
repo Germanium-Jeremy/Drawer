@@ -1,7 +1,4 @@
-interface Point {
-    x: number;
-    y: number;
-}
+import type { Point } from "../types/types";
 
 export class DrawCanvas {
     private canvas: HTMLCanvasElement;

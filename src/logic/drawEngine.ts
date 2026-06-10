@@ -1,15 +1,7 @@
 
 import type { Command } from "./parser";
 import { DrawCanvas } from "./canvas";
-
-interface DrawState {
-    x: number;
-    y: number;
-    angle: number;
-    penDown: boolean;
-    color: string;
-    width: number;
-}
+import type { DrawState } from "../types/types";
 
 export class DrawEngine {
     private canvas: DrawCanvas;

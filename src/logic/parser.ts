@@ -1,7 +1,4 @@
-interface Point {
-    x: number;
-    y: number;
-}
+import type { Point } from "../types/types";
 
 export type Command =
     | { type: 'FORWARD'; value: number }
@@ -102,14 +99,14 @@ export function parse(input: string): Command[] {
     }
 
     // Helper to read a word token and advance the cursor.
-    function expectWord(cmdName: string): string {
-        const token = tokens[index];
-        if (!token || token.type !== 'WORD') {
-            throw new Error(`Command "${cmdName}" expects a text parameter`);
-        }
-        index++;
-        return token.value;
-    }
+    // function expectWord(cmdName: string): string {
+    //     const token = tokens[index];
+    //     if (!token || token.type !== 'WORD') {
+    //         throw new Error(`Command "${cmdName}" expects a text parameter`);
+    //     }
+    //     index++;
+    //     return token.value;
+    // }
 
     // Ensures a command is properly terminated (semicolon, bracket, next command, or EOF).
     function expectTerminator(cmdName: string) {
