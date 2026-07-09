@@ -12,7 +12,7 @@ const SignupDialog = () => {
 
     const handleRegister = async () => {
         try {
-            const response = await api.post('/auth/register', { email, password, role: 'User' })
+            const response = await api.post('/auth/register', { email, password, username: username || undefined })
             const data = response.data
             
             // Auto-login after successful registration
@@ -20,7 +20,11 @@ const SignupDialog = () => {
                 const loginResponse = await api.post('/auth/login', { email, password })
                 const loginData = loginResponse.data
                 
-                register(loginData.token, { email, userId: data.userId || email, username: username || email.split('@')[0] })
+                register(loginData.token, {
+                    userId: loginData.userId,
+                    email: loginData.email,
+                    username: loginData.username ?? username ?? loginData.email.split('@')[0],
+                })
             } catch (loginError: any) {
                 toast.success('Registration successful, please log in.')
                 closeRegister()
