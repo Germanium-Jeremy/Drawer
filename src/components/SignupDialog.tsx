@@ -1,20 +1,35 @@
 import { useState } from "react"
 import { FaX } from "react-icons/fa6"
 import { useAuth } from "../contexts/AuthContext"
+import { toast } from "sonner"
+import api from "../lib/axios"
 
 const SignupDialog = () => {
     const [username, setUsername] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const { register, closeRegister } = useAuth()
+    const { register, closeRegister, openLogin } = useAuth()
 
     const handleRegister = async () => {
-        // Mock registration — replace with real API call later
-        register('mock_token_' + Date.now(), {
-            userId: Date.now(),
-            username: username || 'User',
-            email
-        })
+        try {
+            const response = await api.post('/auth/register', { email, password, role: 'User' })
+            const data = response.data
+            
+            // Auto-login after successful registration
+            try {
+                const loginResponse = await api.post('/auth/login', { email, password })
+                const loginData = loginResponse.data
+                
+                register(loginData.token, { email, userId: data.userId || email, username: username || email.split('@')[0] })
+            } catch (loginError: any) {
+                toast.success('Registration successful, please log in.')
+                closeRegister()
+                openLogin()
+            }
+        } catch (error: any) {
+            console.error('Registration error:', error)
+            toast.error(error.response?.data?.message || 'An error occurred during registration')
+        }
     }
 
     return (
