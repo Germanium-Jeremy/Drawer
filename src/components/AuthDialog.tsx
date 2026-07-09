@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { FaX } from "react-icons/fa6"
 import { useAuth } from "../contexts/AuthContext"
+import { toast } from "sonner"
+import api from "../lib/axios"
 
 const AuthDialog = () => {
     const [email, setEmail] = useState('')
@@ -8,8 +10,15 @@ const AuthDialog = () => {
     const { login, closeLogin } = useAuth()
 
     const handleLogin = async () => {
-        // Mock login — replace with real API call later
-        login('q32434', { email, userId: 1, username: email.split('@')[0] || 'User' })
+        try {
+            const response = await api.post('/auth/login', { email, password })
+            const data = response.data
+            
+            login(data.token, { email, userId: email, username: email.split('@')[0] || 'User' })
+        } catch (error: any) {
+            console.error('Login error:', error)
+            toast.error(error.response?.data?.message || 'An error occurred during login')
+        }
     }
     
     return (
