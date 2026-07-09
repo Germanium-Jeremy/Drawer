@@ -3,10 +3,15 @@ import { FaPlus } from "react-icons/fa"
 import { useAuth } from "../contexts/AuthContext"
 import { useFile } from "../contexts/FileContext"
 import DrawArea from "./DrawArea"
+import { useDraw } from "../contexts/DrawContext"
+import { useState } from "react"
+import ExportDialog from "./ExportDialog"
 
 const MainWindow = () => {
     const { user, openLogin, openRegister, logout } = useAuth()
     const { currentFile, updateFileName, saveCurrentFile } = useFile()
+    const { commands } = useDraw()
+    const [showExport, setShowExport] = useState(false)
 
     const handleUseAI = () => {
         if (!user) {
@@ -48,7 +53,13 @@ const MainWindow = () => {
                         <div className="flex justify-center items-center gap-4">
                             <button onClick={handleSave} className="bg-white text-amber-500 hover:bg-amber-200 hover:text-gray-800 px-4 py-2 rounded-md font-semibold">Save</button>
                             <button className="bg-white text-amber-500 hover:bg-amber-200 hover:text-gray-800 px-4 py-2 rounded-md font-semibold">Share</button>
-                            <button className="bg-white text-amber-500 hover:bg-amber-200 hover:text-gray-800 px-4 py-2 rounded-md font-semibold">Export</button>
+                            <button 
+                                onClick={() => commands?.trim().length > 0 && setShowExport(true)}
+                                disabled={!commands || commands.trim().length === 0}
+                                className={`bg-white px-4 py-2 rounded-md font-semibold transition-colors ${commands?.trim().length > 0 ? 'text-amber-500 hover:bg-amber-200 hover:text-gray-800' : 'text-gray-400 cursor-not-allowed opacity-70'}`}
+                            >
+                                Export
+                            </button>
                             <button onClick={logout} className="bg-white text-amber-500 hover:bg-amber-200 hover:text-gray-800 px-4 py-2 rounded-md font-semibold">Logout</button>
                         </div>
                     )}
@@ -69,6 +80,8 @@ const MainWindow = () => {
                         <FaPlus className="text-gray-600 hover:text-black" />
                     </div>
                 </footer>
+
+                {showExport && <ExportDialog onClose={() => setShowExport(false)} />}
             </div>
     )
 }
