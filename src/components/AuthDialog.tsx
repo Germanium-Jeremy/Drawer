@@ -14,7 +14,11 @@ const AuthDialog = () => {
             const response = await api.post('/auth/login', { email, password })
             const data = response.data
             
-            login(data.token, { email, userId: email, username: email.split('@')[0] || 'User' })
+            login(data.token, {
+                userId: data.userId,
+                email: data.email,
+                username: data.username ?? data.email.split('@')[0],
+            })
         } catch (error: any) {
             console.error('Login error:', error)
             toast.error(error.response?.data?.message || 'An error occurred during login')
