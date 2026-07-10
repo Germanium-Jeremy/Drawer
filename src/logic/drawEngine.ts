@@ -12,7 +12,8 @@ export class DrawEngine {
         angle: 0,
         penDown: true,
         color: "#000000",
-        width: 2
+        width: 2,
+        gradient: null
     };
 
     constructor(canvas: DrawCanvas) {
@@ -56,6 +57,7 @@ export class DrawEngine {
 
             case "COLOR":
                 this.state.color = command.value;
+                this.state.gradient = null;
                 break;
 
             case "WIDTH":
@@ -78,7 +80,7 @@ export class DrawEngine {
                         this.state.x,
                         this.state.y,
                         command.radius,
-                        this.state.color,
+                        this.resolveStrokeStyle(this.state.x, this.state.y, command.radius, command.radius),
                         this.state.width
                     );
                 }
@@ -92,7 +94,7 @@ export class DrawEngine {
                         command.radius,
                         command.startAngle,
                         command.endAngle,
-                        this.state.color,
+                        this.resolveStrokeStyle(this.state.x, this.state.y, command.radius, command.radius),
                         this.state.width
                     );
                 }
@@ -105,7 +107,33 @@ export class DrawEngine {
                         this.state.y,
                         command.rx,
                         command.ry,
-                        this.state.color,
+                        this.resolveStrokeStyle(this.state.x, this.state.y, command.rx, command.ry),
+                        this.state.width
+                    );
+                }
+                break;
+            case "ELLIPSEARC":
+                if (!this.state.penDown || command.startAngle === command.endAngle) {
+                    break;
+                }
+                if (!(command.rx > 0 && command.ry > 0)) {
+                    throw new Error('ELLIPSEARC rx and ry must be > 0');
+                }
+                {
+                    const strokeStyle = this.resolveStrokeStyle(
+                        this.state.x,
+                        this.state.y,
+                        command.rx,
+                        command.ry
+                    );
+                    this.canvas.drawEllipseArc(
+                        this.state.x,
+                        this.state.y,
+                        command.rx,
+                        command.ry,
+                        command.startAngle,
+                        command.endAngle,
+                        strokeStyle,
                         this.state.width
                     );
                 }
@@ -124,6 +152,24 @@ export class DrawEngine {
                     );
                 }
                 break;
+            case "GRADIENT":
+                this.state.gradient = { kind: command.gradientType, stops: command.stops };
+                break;
+
+            case "CLIPCIRCLE":
+                if (command.radius <= 0) throw new Error('CLIPCIRCLE radius must be > 0');
+                this.canvas.beginClipCircle(command.cx, command.cy, command.radius);
+                break;
+
+            case "CLIPELLIPSE":
+                if (command.rx <= 0 || command.ry <= 0) throw new Error('CLIPELLIPSE rx and ry must be > 0');
+                this.canvas.beginClipEllipse(command.cx, command.cy, command.rx, command.ry);
+                break;
+
+            case "ENDCLIP":
+                this.canvas.endClip();
+                break;
+
             case "SETXY":
                 this.state.x = command.x;
                 this.state.y = command.y;
@@ -134,6 +180,13 @@ export class DrawEngine {
                 this.state.angle = 0;
                 break;
         }
+    }
+
+    private resolveStrokeStyle(cx: number, cy: number, rx: number, ry: number): string | CanvasGradient {
+        if (this.state.gradient !== null) {
+            return this.canvas.buildGradient(this.state.gradient, cx, cy, rx, ry);
+        }
+        return this.state.color;
     }
 
     private move(distance: number) {
@@ -149,12 +202,18 @@ export class DrawEngine {
             distance * Math.sin(radians);
 
         if (this.state.penDown) {
+            const strokeStyle = this.resolveStrokeStyle(
+                (this.state.x + newX) / 2,
+                (this.state.y + newY) / 2,
+                Math.abs(newX - this.state.x) / 2,
+                Math.abs(newY - this.state.y) / 2
+            );
             this.canvas.drawLine(
                 this.state.x,
                 this.state.y,
                 newX,
                 newY,
-                this.state.color,
+                strokeStyle,
                 this.state.width
             );
         }
