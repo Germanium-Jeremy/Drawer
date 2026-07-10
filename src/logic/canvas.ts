@@ -1,4 +1,4 @@
-import type { Point } from "../types/types";
+import type { GradientDef, Point } from "../types/types";
 
 export class DrawCanvas {
     private canvas: HTMLCanvasElement;
@@ -33,11 +33,11 @@ export class DrawCanvas {
         y1: number,
         x2: number,
         y2: number,
-        color: string,
+        strokeStyle: string | CanvasGradient,
         width: number
     ) {
         this.ctx.beginPath();
-        this.ctx.strokeStyle = color;
+        this.ctx.strokeStyle = strokeStyle;
         this.ctx.lineWidth = width;
 
         this.ctx.moveTo(x1, y1);
@@ -51,11 +51,11 @@ export class DrawCanvas {
       cx: number,
       cy: number,
       radius: number,
-      color: string,
+      strokeStyle: string | CanvasGradient,
       width: number
     ) {
       this.ctx.beginPath();
-      this.ctx.strokeStyle = color;
+      this.ctx.strokeStyle = strokeStyle;
       this.ctx.lineWidth = width;
       this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       this.ctx.stroke();
@@ -67,7 +67,7 @@ export class DrawCanvas {
         radius: number,
         start: number,
         end: number,
-        color: string,
+        strokeStyle: string | CanvasGradient,
         width: number
     ) {
         this.ctx.beginPath();
@@ -80,10 +80,28 @@ export class DrawCanvas {
             end * Math.PI / 180
         );
 
-        this.ctx.strokeStyle = color;
+        this.ctx.strokeStyle = strokeStyle;
         this.ctx.lineWidth = width;
 
         this.ctx.stroke();
+    }
+
+    beginClipCircle(cx: number, cy: number, r: number): void {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        this.ctx.clip();
+    }
+
+    beginClipEllipse(cx: number, cy: number, rx: number, ry: number): void {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
+        this.ctx.clip();
+    }
+
+    endClip(): void {
+        this.ctx.restore();
     }
 
     drawEllipse(
@@ -91,7 +109,7 @@ export class DrawCanvas {
         y: number,
         rx: number,
         ry: number,
-        color: string,
+        strokeStyle: string | CanvasGradient,
         width: number
     ) {
         this.ctx.beginPath();
@@ -106,13 +124,40 @@ export class DrawCanvas {
             Math.PI * 2
         );
 
-        this.ctx.strokeStyle = color;
+        this.ctx.strokeStyle = strokeStyle;
         this.ctx.lineWidth = width;
 
         this.ctx.stroke();
     }
 
-        /**
+    drawEllipseArc(
+        cx: number,
+        cy: number,
+        rx: number,
+        ry: number,
+        startAngle: number,
+        endAngle: number,
+        strokeStyle: string | CanvasGradient,
+        width: number
+    ) {
+        this.ctx.save();
+        this.ctx.beginPath();
+        this.ctx.ellipse(
+            cx,
+            cy,
+            rx,
+            ry,
+            0,
+            startAngle * Math.PI / 180,
+            endAngle * Math.PI / 180
+        );
+        this.ctx.strokeStyle = strokeStyle;
+        this.ctx.lineWidth = width;
+        this.ctx.stroke();
+        this.ctx.restore();
+    }
+
+    /**
      * Draw a polygon defined by an array of points.
      * @param points   The vertices of the polygon.
      * @param color    Fill (and stroke) color to use. If omitted, the current fillStyle is kept.
@@ -163,5 +208,30 @@ export class DrawCanvas {
 
         // Restore original context (styles, transforms, etc.).
         this.ctx.restore();
+    }
+
+    buildGradient(
+        def: GradientDef,
+        cx: number,
+        cy: number,
+        rx: number,
+        ry: number
+    ): CanvasGradient {
+        let gradient: CanvasGradient;
+
+        if (def.kind === 'linear') {
+            // Top-to-bottom over the bounding box
+            gradient = this.ctx.createLinearGradient(cx, cy - ry, cx, cy + ry);
+        } else {
+            // Radial: inner r=0, outer r=max(rx, ry)
+            const outerR = Math.max(rx, ry);
+            gradient = this.ctx.createRadialGradient(cx, cy, 0, cx, cy, outerR);
+        }
+
+        for (const stop of def.stops) {
+            gradient.addColorStop(stop.offset, stop.color);
+        }
+
+        return gradient;
     }
 }
