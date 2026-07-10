@@ -1,4 +1,4 @@
-import type { Point } from "../types/types";
+import type { Point, ColorStop } from "../types/types";
 
 export type Command =
     | { type: 'FORWARD'; value: number }
@@ -17,6 +17,11 @@ export type Command =
     | { type: 'ARC'; radius: number; startAngle: number; endAngle: number }
     | { type: 'ELLIPSE'; rx: number; ry: number }
     | { type: 'POLYGON'; points: Point[]; color?: string; width?: number; rotation?: number }
+    | { type: 'GRADIENT'; gradientType: 'linear' | 'radial'; stops: ColorStop[] }
+    | { type: 'CLIPCIRCLE'; cx: number; cy: number; radius: number }
+    | { type: 'CLIPELLIPSE'; cx: number; cy: number; rx: number; ry: number }
+    | { type: 'ENDCLIP' }
+    | { type: 'ELLIPSEARC'; rx: number; ry: number; startAngle: number; endAngle: number }
 
 type Token =
     | { type: 'WORD'; value: string }
@@ -300,6 +305,66 @@ export function parse(input: string): Command[] {
                 index++; // consume closing bracket
                 expectTerminator(cmdWord);
                 return { type: 'POLYGON', points };
+            }
+            case 'gradient': {
+                const kindToken = tokens[index];       // 'linear' or 'radial'
+                if (!kindToken || kindToken.type !== 'WORD' ||
+                    (kindToken.value !== 'linear' && kindToken.value !== 'radial')) {
+                    throw new Error('GRADIENT expects "linear" or "radial"');
+                }
+                index++;
+
+                const gradBracketToken = tokens[index];
+                if (!gradBracketToken || gradBracketToken.type !== 'LBRACKET') {
+                    throw new Error('GRADIENT expects "[" before color stops');
+                }
+                index++;
+
+                const stops: ColorStop[] = [];
+                while (index < tokens.length && tokens[index].type !== 'RBRACKET') {
+                    const offset = expectNumber('GRADIENT');  // 0.0 – 1.0
+                    if (offset < 0 || offset > 1) {
+                        throw new Error('Gradient stop offset must be between 0 and 1');
+                    }
+                    const colorToken = tokens[index];
+                    if (!colorToken || colorToken.type !== 'WORD') {
+                        throw new Error('GRADIENT stop expects a color word');
+                    }
+                    index++;
+                    stops.push({ offset, color: colorToken.value });
+                }
+                if (stops.length < 2) throw new Error('GRADIENT requires at least 2 color stops');
+
+                index++; // consume ']'
+                expectTerminator('GRADIENT');
+                return { type: 'GRADIENT', gradientType: kindToken.value as 'linear' | 'radial', stops };
+            }
+            case 'clipcircle': {
+                const cx = expectNumber('CLIPCIRCLE');
+                const cy = expectNumber('CLIPCIRCLE');
+                const radius = expectNumber('CLIPCIRCLE');
+                expectTerminator('CLIPCIRCLE');
+                return { type: 'CLIPCIRCLE', cx, cy, radius };
+            }
+            case 'clipellipse': {
+                const cx = expectNumber('CLIPELLIPSE');
+                const cy = expectNumber('CLIPELLIPSE');
+                const rx = expectNumber('CLIPELLIPSE');
+                const ry = expectNumber('CLIPELLIPSE');
+                expectTerminator('CLIPELLIPSE');
+                return { type: 'CLIPELLIPSE', cx, cy, rx, ry };
+            }
+            case 'endclip': {
+                expectTerminator('ENDCLIP');
+                return { type: 'ENDCLIP' };
+            }
+            case 'ellipsearc': {
+                const rx = expectNumber('ELLIPSEARC');
+                const ry = expectNumber('ELLIPSEARC');
+                const startAngle = expectNumber('ELLIPSEARC');
+                const endAngle = expectNumber('ELLIPSEARC');
+                expectTerminator('ELLIPSEARC');
+                return { type: 'ELLIPSEARC', rx, ry, startAngle, endAngle };
             }
             default:
                 throw new Error(`Unknown command: "${cmdWord}"`);
